@@ -1,0 +1,7 @@
+Flask
+face_recognition
+opencv-python
+numpy
+pandas
+requests
+gunicorn
