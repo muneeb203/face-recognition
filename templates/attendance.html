@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take Attendance - Face Recognition Attendance System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-user-check text-3xl"></i>
+                    <h1 class="text-2xl font-bold">Face Recognition Attendance System</h1>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="/" class="font-medium hover:text-blue-200 transition-colors">Home</a>
+                    <a href="/register" class="font-medium hover:text-blue-200 transition-colors">Register</a>
+                    <a href="/attendance" class="font-medium hover:text-blue-200 transition-colors">Take Attendance</a>
+                    <a href="/reports" class="font-medium hover:text-blue-200 transition-colors">Reports</a>
+                    <a href="/import" class="font-medium hover:text-blue-200 transition-colors">Import</a>
+                    <a href="/session" class="font-medium hover:text-blue-200 transition-colors">Session</a>
+                </nav>
+                <button id="mobile-menu-button" class="md:hidden text-white focus:outline-none">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobile-menu" class="md:hidden hidden bg-blue-500 text-white">
+        <div class="container mx-auto px-4 py-2">
+            <a href="/" class="block py-2 hover:bg-blue-600 transition-colors">Home</a>
+            <a href="/register" class="block py-2 hover:bg-blue-600 transition-colors">Register</a>
+            <a href="/attendance" class="block py-2 hover:bg-blue-600 transition-colors">Take Attendance</a>
+            <a href="/reports" class="block py-2 hover:bg-blue-600 transition-colors">Reports</a>
+            <a href="/import" class="block py-2 hover:bg-blue-600 transition-colors">Import</a>
+            <a href="/session" class="block py-2 hover:bg-blue-600 transition-colors">Session</a>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-5xl mx-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-gray-800">Take Attendance</h2>
+                <a href="/session" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                    <i class="fas fa-clock mr-2"></i> Manage Class Session
+                </a>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-semibold mb-4">Camera Feed</h3>
+                    <div class="relative">
+                        <div class="bg-gray-200 rounded-lg overflow-hidden aspect-video flex items-center justify-center">
+                            <img id="video_feed" src="{{ url_for('video_feed') }}" alt="Camera Feed" class="w-full h-auto">
+                        </div>
+                        <div id="faceDetectionStatus" class="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm">
+                            No Face Detected
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button id="captureAttendanceBtn" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-medium py-3 px-4 rounded-md transition-colors">
+                            <i class="fas fa-camera mr-2"></i> Capture Attendance
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-semibold mb-4">Recognition Status</h3>
+                    
+                    <div id="initialMessage" class="text-center py-12">
+                        <i class="fas fa-camera text-gray-300 text-5xl mb-4"></i>
+                        <p class="text-gray-500">Click "Capture Attendance" to start recognition</p>
+                    </div>
+                    
+                    <div id="loadingStatus" class="text-center py-12 hidden">
+                        <i class="fas fa-spinner fa-spin text-purple-500 text-5xl mb-4"></i>
+                        <p class="text-gray-700">Processing...</p>
+                    </div>
+                    
+                    <div id="successStatus" class="hidden">
+                        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-check-circle text-green-500"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="font-medium">Attendance Marked Successfully!</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white border rounded-lg p-4">
+                            <div class="flex items-center mb-4">
+                                <div class="bg-purple-100 text-purple-500 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+                                    <i class="fas fa-user text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 id="studentName" class="font-semibold text-lg">-</h4>
+                                    <p id="studentRoll" class="text-gray-600">Roll No: -</p>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <p class="text-gray-500">Date</p>
+                                    <p id="attendanceDate" class="font-medium">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500">Time</p>
+                                    <p id="attendanceTime" class="font-medium">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500">Status</p>
+                                    <p id="attendanceStatus" class="font-medium">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500">Confidence</p>
+                                    <p id="recognitionConfidence" class="font-medium">-</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="errorStatus" class="hidden">
+                        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-circle text-red-500"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p id="errorMessage" class="font-medium">Error message here</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 text-gray-600">
+                            <p><i class="fas fa-info-circle mr-1"></i> Make sure your face is clearly visible in the camera.</p>
+                            <p class="mt-2"><i class="fas fa-lightbulb mr-1"></i> Ensure good lighting for better recognition.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-semibold mb-4">Today's Attendance</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-4 bg-gray-100 text-left text-gray-600 font-semibold">Roll Number</th>
+                                <th class="py-3 px-4 bg-gray-100 text-left text-gray-600 font-semibold">Name</th>
+                                <th class="py-3 px-4 bg-gray-100 text-left text-gray-600 font-semibold">Time</th>
+                                <th class="py-3 px-4 bg-gray-100 text-left text-gray-600 font-semibold">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="todayAttendanceTableBody">
+                            <tr>
+                                <td colspan="4" class="py-4 px-4 text-center text-gray-500">Loading today's attendance...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-gray-800 text-white mt-16 py-8">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <p>&copy; 2025 Face Recognition Attendance System</p>
+                <p class="mt-2 text-gray-400">Powered by OpenCV and face_recognition</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Face detection status check
+        function checkFaceDetection() {
+            const videoFeed = document.getElementById('video_feed');
+            const faceDetectionStatus = document.getElementById('faceDetectionStatus');
+            
+            // This is a simplified check - in a real app, you'd use the API to check
+            // For demo purposes, we'll toggle randomly
+            const isFaceDetected = Math.random() > 0.5;
+            
+            if (isFaceDetected) {
+                faceDetectionStatus.textContent = 'Face Detected';
+                faceDetectionStatus.classList.remove('bg-red-500');
+                faceDetectionStatus.classList.add('bg-green-500');
+            } else {
+                faceDetectionStatus.textContent = 'No Face Detected';
+                faceDetectionStatus.classList.remove('bg-green-500');
+                faceDetectionStatus.classList.add('bg-red-500');
+            }
+        }
+
+        // Check face detection status periodically
+        setInterval(checkFaceDetection, 1000);
+
+        // Capture attendance
+        document.getElementById('captureAttendanceBtn').addEventListener('click', function() {
+            // Show loading state
+            document.getElementById('initialMessage').classList.add('hidden');
+            document.getElementById('successStatus').classList.add('hidden');
+            document.getElementById('errorStatus').classList.add('hidden');
+            document.getElementById('loadingStatus').classList.remove('hidden');
+            
+            // Disable button
+            const captureBtn = document.getElementById('captureAttendanceBtn');
+            captureBtn.disabled = true;
+            captureBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+            
+            fetch('/api/take_attendance', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingStatus').classList.add('hidden');
+                
+                if (data.success) {
+                    document.getElementById('successStatus').classList.remove('hidden');
+                    
+                    // Update student info
+                    document.getElementById('studentName').textContent = data.student.name;
+                    document.getElementById('studentRoll').textContent = `Roll No: ${data.student.roll_no}`;
+                    document.getElementById('attendanceDate').textContent = data.student.date;
+                    document.getElementById('attendanceTime').textContent = data.student.time;
+                    document.getElementById('attendanceStatus').textContent = data.student.status;
+                    document.getElementById('recognitionConfidence').textContent = 
+                        `${(data.student.confidence * 100).toFixed(2)}%`;
+                    
+                    // Refresh today's attendance
+                    loadTodayAttendance();
+                } else {
+                    document.getElementById('errorStatus').classList.remove('hidden');
+                    document.getElementById('errorMessage').textContent = data.message;
+                }
+                
+                // Reset button
+                captureBtn.disabled = false;
+                captureBtn.innerHTML = '<i class="fas fa-camera mr-2"></i> Capture Attendance';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('loadingStatus').classList.add('hidden');
+                document.getElementById('errorStatus').classList.remove('hidden');
+                document.getElementById('errorMessage').textContent = 'An error occurred. Please try again.';
+                
+                // Reset button
+                captureBtn.disabled = false;
+                captureBtn.innerHTML = '<i class="fas fa-camera mr-2"></i> Capture Attendance';
+            });
+        });
+
+        // Load today's attendance
+        function loadTodayAttendance() {
+            fetch('/api/get_attendance')
+                .then(response => response.json())
+                .then(data => {
+                    const todayAttendanceTableBody = document.getElementById('todayAttendanceTableBody');
+                    
+                    if (data.records && data.records.length > 0) {
+                        // Filter for today's records
+                        const today = new Date().toISOString().split('T')[0];
+                        const todayRecords = data.records.filter(record => record.date === today);
+                        
+                        if (todayRecords.length > 0) {
+                            // Sort by time (newest first)
+                            todayRecords.sort((a, b) => b.time.localeCompare(a.time));
+                            
+                            let tableContent = '';
+                            
+                            todayRecords.forEach(record => {
+                                // Determine status class
+                                let statusClass = '';
+                                if (record.status === 'Present') {
+                                    statusClass = 'bg-green-100 text-green-800';
+                                } else if (record.status === 'Late') {
+                                    statusClass = 'bg-yellow-100 text-yellow-800';
+                                } else if (record.status === 'Very Late') {
+                                    statusClass = 'bg-red-100 text-red-800';
+                                }
+                                
+                                tableContent += `
+                                    <tr>
+                                        <td class="py-3 px-4 border-b">${record.roll_no}</td>
+                                        <td class="py-3 px-4 border-b">${record.name}</td>
+                                        <td class="py-3 px-4 border-b">${record.time}</td>
+                                        <td class="py-3 px-4 border-b">
+                                            <span class="${statusClass} text-xs font-medium px-2.5 py-0.5 rounded">
+                                                ${record.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `;
+                            });
+                            
+                            todayAttendanceTableBody.innerHTML = tableContent;
+                        } else {
+                            todayAttendanceTableBody.innerHTML = `
+                                <tr>
+                                    <td colspan="4" class="py-4 px-4 text-center text-gray-500">No attendance records for today.</td>
+                                </tr>
+                            `;
+                        }
+                    } else {
+                        todayAttendanceTableBody.innerHTML = `
+                            <tr>
+                                <td colspan="4" class="py-4 px-4 text-center text-gray-500">No attendance records found.</td>
+                            </tr>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    const todayAttendanceTableBody = document.getElementById('todayAttendanceTableBody');
+                    todayAttendanceTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="py-4 px-4 text-center text-red-500">Error loading attendance records.</td>
+                        </tr>
+                    `;
+                });
+        }
+
+        // Load today's attendance when page loads
+        document.addEventListener('DOMContentLoaded', loadTodayAttendance);
+    </script>
+</body>
+</html>

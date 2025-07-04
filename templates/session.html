@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Session - Face Recognition Attendance System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-user-check text-3xl"></i>
+                    <h1 class="text-2xl font-bold">Face Recognition Attendance System</h1>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="/" class="font-medium hover:text-blue-200 transition-colors">Home</a>
+                    <a href="/register" class="font-medium hover:text-blue-200 transition-colors">Register</a>
+                    <a href="/attendance" class="font-medium hover:text-blue-200 transition-colors">Take Attendance</a>
+                    <a href="/reports" class="font-medium hover:text-blue-200 transition-colors">Reports</a>
+                    <a href="/import" class="font-medium hover:text-blue-200 transition-colors">Import</a>
+                    <a href="/session" class="font-medium hover:text-blue-200 transition-colors">Session</a>
+                </nav>
+                <button id="mobile-menu-button" class="md:hidden text-white focus:outline-none">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobile-menu" class="md:hidden hidden bg-blue-500 text-white">
+        <div class="container mx-auto px-4 py-2">
+            <a href="/" class="block py-2 hover:bg-blue-600 transition-colors">Home</a>
+            <a href="/register" class="block py-2 hover:bg-blue-600 transition-colors">Register</a>
+            <a href="/attendance" class="block py-2 hover:bg-blue-600 transition-colors">Take Attendance</a>
+            <a href="/reports" class="block py-2 hover:bg-blue-600 transition-colors">Reports</a>
+            <a href="/import" class="block py-2 hover:bg-blue-600 transition-colors">Import</a>
+            <a href="/session" class="block py-2 hover:bg-blue-600 transition-colors">Session</a>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-5xl mx-auto">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Class Session Management</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-semibold mb-4">Camera Feed</h3>
+                    <div class="relative">
+                        <div class="bg-gray-200 rounded-lg overflow-hidden aspect-video flex items-center justify-center">
+                            <img id="video_feed" src="{{ url_for('video_feed') }}" alt="Camera Feed" class="w-full h-auto">
+                        </div>
+                        <div id="faceDetectionStatus" class="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm">
+                            No Face Detected
+                        </div>
+                        <div id="autoModeStatus" class="absolute top-4 left-4 bg-gray-500 text-white px-3 py-1 rounded-full text-sm">
+                            Auto Mode: Off
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div id="noSessionView">
+                        <h3 class="text-xl font-semibold mb-4">Start New Class Session</h3>
+                        <form id="startSessionForm" class="space-y-4">
+                            <div>
+                                <label for="course_code" class="block text-gray-700 font-medium mb-2">Course Code</label>
+                                <input type="text" id="course_code" name="course_code" required 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="e.g., CS101">
+                            </div>
+                            <div>
+                                <label for="duration_minutes" class="block text-gray-700 font-medium mb-2">Class Duration (minutes)</label>
+                                <input type="number" id="duration_minutes" name="duration_minutes" required min="15" max="240" value="90"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="present_threshold" class="block text-gray-700 font-medium mb-2">Present Threshold (minutes)</label>
+                                    <input type="number" id="present_threshold" name="present_threshold" required min="1" max="60" value="10"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div>
+                                    <label for="late_threshold" class="block text-gray-700 font-medium mb-2">Late Threshold (minutes)</label>
+                                    <input type="number" id="late_threshold" name="late_threshold" required min="5" max="120" value="30"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                            </div>
+                            <div class="pt-4">
+                                <button type="submit" id="startSessionBtn" 
+                                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                                    <i class="fas fa-play-circle mr-2"></i> Start Class Session
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div id="activeSessionView" class="hidden">
+                        <h3 class="text-xl font-semibold mb-4">Active Class Session</h3>
+                        <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 mb-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-info-circle text-blue-500"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="font-medium">Automatic face recognition is active</p>
+                                    <p class="text-sm">Students will be marked automatically when detected</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Course Code</p>
+                                    <p id="activeCourseCode" class="font-medium text-lg">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 text-sm">Start Time</p>
+                                    <p id="sessionStartTime" class="font-medium">-</p>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Elapsed Time</p>
+                                    <p id="sessionElapsedTime" class="font-medium">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 text-sm">Remaining Time</p>
+                                    <p id="sessionRemainingTime" class="font-medium">-</p>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Present Threshold</p>
+                                    <p id="presentThreshold" class="font-medium">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 text-sm">Late Threshold</p>
+                                    <p id="lateThreshold" class="font-medium">-</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-4">
+                            <button id="toggleAutoModeBtn" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                                <i class="fas fa-camera mr-2"></i> <span id="autoModeButtonText">Disable Auto Mode</span>
+                            </button>
+                            <button id="endSessionBtn" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                                <i class="fas fa-stop-circle mr-2"></i> End Session
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-semibold mb-4">Session Attendance</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-4 bg-gray-100 text-left text-gray-600 font-semibold">Roll Number</th>
+                                <th class="py-3 px-4 bg-gray-100 text-left text-gray-600 font-semibold">Name</th>
+                                <th class="py-3 px-4 bg-gray-100 text-left text-gray-600 font-semibold">Time</th>
+                                <th class="py-3 px-4 bg-gray-100 text-left text-gray-600 font-semibold">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sessionAttendanceTableBody">
+                            <tr>
+                                <td colspan="4" class="py-4 px-4 text-center text-gray-500">No attendance records for this session yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-gray-800 text-white mt-16 py-8">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <p>&copy; 2025 Face Recognition Attendance System</p>
+                <p class="mt-2 text-gray-400">Powered by OpenCV and face_recognition</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Face detection status check
+        function checkFaceDetection() {
+            const videoFeed = document.getElementById('video_feed');
+            const faceDetectionStatus = document.getElementById('faceDetectionStatus');
+            
+            // This is a simplified check - in a real app, you'd use the API to check
+            // For demo purposes, we'll toggle randomly
+            const isFaceDetected = Math.random() > 0.5;
+            
+            if (isFaceDetected) {
+                faceDetectionStatus.textContent = 'Face Detected';
+                faceDetectionStatus.classList.remove('bg-red-500');
+                faceDetectionStatus.classList.add('bg-green-500');
+            } else {
+                faceDetectionStatus.textContent = 'No Face Detected';
+                faceDetectionStatus.classList.remove('bg-green-500');
+                faceDetectionStatus.classList.add('bg-red-500');
+            }
+        }
+
+        // Check face detection status periodically
+        setInterval(checkFaceDetection, 1000);
+
+        // Session management
+        let autoModeEnabled = true;
+        let sessionStatusInterval = null;
+
+        // Start session form submission
+        document.getElementById('startSessionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const courseCode = document.getElementById('course_code').value;
+            const durationMinutes = document.getElementById('duration_minutes').value;
+            const presentThreshold = document.getElementById('present_threshold').value;
+            const lateThreshold = document.getElementById('late_threshold').value;
+            
+            const formData = new FormData();
+            formData.append('course_code', courseCode);
+            formData.append('duration_minutes', durationMinutes);
+            formData.append('present_threshold', presentThreshold);
+            formData.append('late_threshold', lateThreshold);
+            
+            // Show loading state
+            const startBtn = document.getElementById('startSessionBtn');
+            startBtn.disabled = true;
+            startBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Starting...';
+            
+            fetch('/api/start_session', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Switch to active session view
+                    document.getElementById('noSessionView').classList.add('hidden');
+                    document.getElementById('activeSessionView').classList.remove('hidden');
+                    
+                    // Update session info
+                    document.getElementById('activeCourseCode').textContent = data.course_code;
+                    document.getElementById('sessionStartTime').textContent = data.start_time;
+                    
+                    // Update auto mode status
+                    autoModeEnabled = true;
+                    updateAutoModeUI();
+                    
+                    // Start polling for session status
+                    startSessionStatusPolling();
+                    
+                    // Load session attendance
+                    loadSessionAttendance();
+                } else {
+                    alert('Failed to start session: ' + data.message);
+                    
+                    // Reset button
+                    startBtn.disabled = false;
+                    startBtn.innerHTML = '<i class="fas fa-play-circle mr-2"></i> Start Class Session';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while starting the session.');
+                
+                // Reset button
+                startBtn.disabled = false;
+                startBtn.innerHTML = '<i class="fas fa-play-circle mr-2"></i> Start Class Session';
+            });
+        });
+
+        // End session button
+        document.getElementById('endSessionBtn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to end the current session?')) {
+                // Show loading state
+                this.disabled = true;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Ending...';
+                
+                fetch('/api/end_session', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Switch back to start session view
+                        document.getElementById('activeSessionView').classList.add('hidden');
+                        document.getElementById('noSessionView').classList.remove('hidden');
+                        
+                        // Stop polling for session status
+                        stopSessionStatusPolling();
+                        
+                        // Reset form
+                        document.getElementById('startSessionForm').reset();
+                        
+                        // Reset button
+                        this.disabled = false;
+                        this.innerHTML = '<i class="fas fa-stop-circle mr-2"></i> End Session';
+                    } else {
+                        alert('Failed to end session: ' + data.message);
+                        
+                        // Reset button
+                        this.disabled = false;
+                        this.innerHTML = '<i class="fas fa-stop-circle mr-2"></i> End Session';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while ending the session.');
+                    
+                    // Reset button
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-stop-circle mr-2"></i> End Session';
+                });
+            }
+        });
+
+        // Toggle auto mode button
+        document.getElementById('toggleAutoModeBtn').addEventListener('click', function() {
+            // Show loading state
+            this.disabled = true;
+            
+            const formData = new FormData();
+            formData.append('enabled', !autoModeEnabled);
+            
+            fetch('/api/toggle_auto_capture', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    autoModeEnabled = data.auto_capture_enabled;
+                    updateAutoModeUI();
+                } else {
+                    alert('Failed to toggle auto mode.');
+                }
+                
+                // Reset button
+                this.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while toggling auto mode.');
+                
+                // Reset button
+                this.disabled = false;
+            });
+        });
+
+        // Update auto mode UI
+        function updateAutoModeUI() {
+            const autoModeStatus = document.getElementById('autoModeStatus');
+            const autoModeButtonText = document.getElementById('autoModeButtonText');
+            
+            if (autoModeEnabled) {
+                autoModeStatus.textContent = 'Auto Mode: On';
+                autoModeStatus.classList.remove('bg-gray-500');
+                autoModeStatus.classList.add('bg-green-500');
+                autoModeButtonText.textContent = 'Disable Auto Mode';
+            } else {
+                autoModeStatus.textContent = 'Auto Mode: Off';
+                autoModeStatus.classList.remove('bg-green-500');
+                autoModeStatus.classList.add('bg-gray-500');
+                autoModeButtonText.textContent = 'Enable Auto Mode';
+            }
+        }
+
+        // Start polling for session status
+        function startSessionStatusPolling() {
+            // Clear any existing interval
+            stopSessionStatusPolling();
+            
+            // Start new polling interval
+            sessionStatusInterval = setInterval(updateSessionStatus, 5000);
+            
+            // Initial update
+            updateSessionStatus();
+        }
+
+        // Stop polling for session status
+        function stopSessionStatusPolling() {
+            if (sessionStatusInterval) {
+                clearInterval(sessionStatusInterval);
+                sessionStatusInterval = null;
+            }
+        }
+
+        // Update session status
+        function updateSessionStatus() {
+            fetch('/api/session_status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.active) {
+                        // Update session info
+                        document.getElementById('activeCourseCode').textContent = data.course_code;
+                        document.getElementById('sessionStartTime').textContent = data.start_time;
+                        document.getElementById('sessionElapsedTime').textContent = `${data.elapsed_minutes} minutes`;
+                        document.getElementById('sessionRemainingTime').textContent = `${data.remaining_minutes} minutes`;
+                        document.getElementById('presentThreshold').textContent = `${data.present_threshold_minutes} minutes`;
+                        document.getElementById('lateThreshold').textContent = `${data.late_threshold_minutes} minutes`;
+                        
+                        // Load session attendance
+                        loadSessionAttendance();
+                        
+                        // If session is over, end it automatically
+                        if (data.remaining_minutes <= 0) {
+                            fetch('/api/end_session', { method: 'POST' })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        alert('Class session has ended automatically.');
+                                        
+                                        // Switch back to start session view
+                                        document.getElementById('activeSessionView').classList.add('hidden');
+                                        document.getElementById('noSessionView').classList.remove('hidden');
+                                        
+                                        // Stop polling for session status
+                                        stopSessionStatusPolling();
+                                    }
+                                })
+                                .catch(error => console.error('Error ending session:', error));
+                        }
+                    } else {
+                        // If no active session, switch to start session view
+                        document.getElementById('activeSessionView').classList.add('hidden');
+                        document.getElementById('noSessionView').classList.remove('hidden');
+                        
+                        // Stop polling for session status
+                        stopSessionStatusPolling();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching session status:', error);
+                });
+        }
+
+        // Load session attendance
+        function loadSessionAttendance() {
+            fetch('/api/get_attendance')
+                .then(response => response.json())
+                .then(data => {
+                    const attendanceTableBody = document.getElementById('sessionAttendanceTableBody');
+                    
+                    if (data.records && data.records.length > 0) {
+                        // Filter for today's records
+                        const today = new Date().toISOString().split('T')[0];
+                        const todayRecords = data.records.filter(record => record.date === today);
+                        
+                        if (todayRecords.length > 0) {
+                            // Sort by time (newest first)
+                            todayRecords.sort((a, b) => b.time.localeCompare(a.time));
+                            
+                            let tableContent = '';
+                            
+                            todayRecords.forEach(record => {
+                                // Determine status class
+                                let statusClass = '';
+                                if (record.status === 'Present') {
+                                    statusClass = 'bg-green-100 text-green-800';
+                                } else if (record.status === 'Late') {
+                                    statusClass = 'bg-yellow-100 text-yellow-800';
+                                } else if (record.status === 'Very Late') {
+                                    statusClass = 'bg-red-100 text-red-800';
+                                }
+                                
+                                tableContent += `
+                                    <tr>
+                                        <td class="py-3 px-4 border-b">${record.roll_no}</td>
+                                        <td class="py-3 px-4 border-b">${record.name}</td>
+                                        <td class="py-3 px-4 border-b">${record.time}</td>
+                                        <td class="py-3 px-4 border-b">
+                                            <span class="${statusClass} text-xs font-medium px-2.5 py-0.5 rounded">
+                                                ${record.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `;
+                            });
+                            
+                            attendanceTableBody.innerHTML = tableContent;
+                        } else {
+                            attendanceTableBody.innerHTML = `
+                                <tr>
+                                    <td colspan="4" class="py-4 px-4 text-center text-gray-500">No attendance records for today.</td>
+                                </tr>
+                            `;
+                        }
+                    } else {
+                        attendanceTableBody.innerHTML = `
+                            <tr>
+                                <td colspan="4" class="py-4 px-4 text-center text-gray-500">No attendance records found.</td>
+                            </tr>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    const attendanceTableBody = document.getElementById('sessionAttendanceTableBody');
+                    attendanceTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="py-4 px-4 text-center text-red-500">Error loading attendance records.</td>
+                        </tr>
+                    `;
+                });
+        }
+
+        // Check if there's an active session on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/session_status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.active) {
+                        // Switch to active session view
+                        document.getElementById('noSessionView').classList.add('hidden');
+                        document.getElementById('activeSessionView').classList.remove('hidden');
+                        
+                        // Update session info
+                        document.getElementById('activeCourseCode').textContent = data.course_code;
+                        document.getElementById('sessionStartTime').textContent = data.start_time;
+                        document.getElementById('sessionElapsedTime').textContent = `${data.elapsed_minutes} minutes`;
+                        document.getElementById('sessionRemainingTime').textContent = `${data.remaining_minutes} minutes`;
+                        document.getElementById('presentThreshold').textContent = `${data.present_threshold_minutes} minutes`;
+                        document.getElementById('lateThreshold').textContent = `${data.late_threshold_minutes} minutes`;
+                        
+                        // Update auto mode status
+                        autoModeEnabled = true;
+                        updateAutoModeUI();
+                        
+                        // Start polling for session status
+                        startSessionStatusPolling();
+                        
+                        // Load session attendance
+                        loadSessionAttendance();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching session status:', error);
+                });
+        });
+    </script>
+</body>
+</html>

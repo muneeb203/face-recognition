@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Face - Face Recognition Attendance System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-user-check text-3xl"></i>
+                    <h1 class="text-2xl font-bold">Face Recognition Attendance System</h1>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="/" class="font-medium hover:text-blue-200 transition-colors">Home</a>
+                    {% if session.user %}
+                        <span class="font-medium text-blue-200">Welcome, {{ session.user.name }}</span>
+                        <a href="{{ url_for('logout') }}" class="font-medium hover:text-blue-200 transition-colors">Logout</a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="font-medium hover:text-blue-200 transition-colors">Login</a>
+                    {% endif %}
+                </nav>
+                <button id="mobile-menu-button" class="md:hidden text-white focus:outline-none">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobile-menu" class="md:hidden hidden bg-blue-500 text-white">
+        <div class="container mx-auto px-4 py-2">
+            <a href="/" class="block py-2 hover:bg-blue-600 transition-colors">Home</a>
+            {% if session.user %}
+                <span class="block py-2">Welcome, {{ session.user.name }}</span>
+                <a href="{{ url_for('logout') }}" class="block py-2 hover:bg-blue-600 transition-colors">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="block py-2 hover:bg-blue-600 transition-colors">Login</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-5xl mx-auto">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Register Your Face</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-semibold mb-4">Student Information</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Roll Number</label>
+                            <div class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100">
+                                {{ student.roll_no }}
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Full Name</label>
+                            <div class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100">
+                                {{ student.name }}
+                            </div>
+                        </div>
+                        <div class="pt-4">
+                            <button id="captureBtn" 
+                                class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                                <i class="fas fa-camera mr-2"></i> Capture & Register
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="registrationStatus" class="mt-4 hidden">
+                        <div id="successMessage" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative hidden">
+                            <span id="successText"></span>
+                        </div>
+                        <div id="errorMessage" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative hidden">
+                            <span id="errorText"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-semibold mb-4">Camera Preview</h3>
+                    <div class="relative">
+                        <div class="bg-gray-200 rounded-lg overflow-hidden aspect-video flex items-center justify-center">
+                            <img id="video_feed" src="{{ url_for('video_feed') }}" alt="Camera Feed" class="w-full h-auto">
+                        </div>
+                        <div id="faceDetectionStatus" class="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm">
+                            No Face Detected
+                        </div>
+                    </div>
+                    <div class="mt-4 text-gray-600 text-sm">
+                        <p><i class="fas fa-info-circle mr-1"></i> Position your face clearly in the camera view.</p>
+                        <p class="mt-2"><i class="fas fa-lightbulb mr-1"></i> Ensure good lighting for better recognition.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-gray-800 text-white mt-16 py-8">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <p>&copy; 2025 Face Recognition Attendance System</p>
+                <p class="mt-2 text-gray-400">Powered by OpenCV and face_recognition</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Face detection status check
+        function checkFaceDetection() {
+            const videoFeed = document.getElementById('video_feed');
+            const faceDetectionStatus = document.getElementById('faceDetectionStatus');
+            
+            // This is a simplified check - in a real app, you'd use the API to check
+            // For demo purposes, we'll toggle randomly
+            const isFaceDetected = Math.random() > 0.5;
+            
+            if (isFaceDetected) {
+                faceDetectionStatus.textContent = 'Face Detected';
+                faceDetectionStatus.classList.remove('bg-red-500');
+                faceDetectionStatus.classList.add('bg-green-500');
+            } else {
+                faceDetectionStatus.textContent = 'No Face Detected';
+                faceDetectionStatus.classList.remove('bg-green-500');
+                faceDetectionStatus.classList.add('bg-red-500');
+            }
+        }
+
+        // Check face detection status periodically
+        setInterval(checkFaceDetection, 1000);
+
+        // Registration form submission
+        document.getElementById('captureBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Show loading state
+            const captureBtn = document.getElementById('captureBtn');
+            captureBtn.disabled = true;
+            captureBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+            
+            fetch('/api/register_student', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                const registrationStatus = document.getElementById('registrationStatus');
+                const successMessage = document.getElementById('successMessage');
+                const errorMessage = document.getElementById('errorMessage');
+                const successText = document.getElementById('successText');
+                const errorText = document.getElementById('errorText');
+                
+                registrationStatus.classList.remove('hidden');
+                
+                if (data.success) {
+                    successMessage.classList.remove('hidden');
+                    errorMessage.classList.add('hidden');
+                    successText.textContent = data.message;
+                    
+                    // Disable button after successful registration
+                    captureBtn.disabled = true;
+                    captureBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Registration Complete';
+                    captureBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                    captureBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                } else {
+                    successMessage.classList.add('hidden');
+                    errorMessage.classList.remove('hidden');
+                    errorText.textContent = data.message;
+                    
+                    // Reset button
+                    captureBtn.disabled = false;
+                    captureBtn.innerHTML = '<i class="fas fa-camera mr-2"></i> Capture & Register';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const registrationStatus = document.getElementById('registrationStatus');
+                const successMessage = document.getElementById('successMessage');
+                const errorMessage = document.getElementById('errorMessage');
+                const errorText = document.getElementById('errorText');
+                
+                registrationStatus.classList.remove('hidden');
+                successMessage.classList.add('hidden');
+                errorMessage.classList.remove('hidden');
+                errorText.textContent = 'An error occurred. Please try again.';
+                
+                // Reset button
+                captureBtn.disabled = false;
+                captureBtn.innerHTML = '<i class="fas fa-camera mr-2"></i> Capture & Register';
+            });
+        });
+    </script>
+</body>
+</html>

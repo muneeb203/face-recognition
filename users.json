@@ -1,0 +1,37 @@
+{
+    "users": [
+        {
+            "username": "admin",
+            "password": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+            "role": "teacher",
+            "name": "Admin User"
+        },
+        {
+            "username": "momna",
+            "password": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+            "role": "student",
+            "name": "Momna Asif",
+            "roll_no": "i22-1990"
+        },
+        {
+            "username": "momna123",
+            "password": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+            "role": "student",
+            "name": "momna asif",
+            "roll_no": "i22-1990"
+        },
+        {
+            "username": "malaika",
+            "password": "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5",
+            "role": "teacher",
+            "name": "malaika azhar"
+        },
+        {
+            "username": "hadi1234",
+            "password": "15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225",
+            "role": "student",
+            "name": "hadi ",
+            "roll_no": "i22-1923"
+        }
+    ]
+}

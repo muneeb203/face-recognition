@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Reports - Face Recognition Attendance System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-user-check text-3xl"></i>
+                    <h1 class="text-2xl font-bold">Face Recognition Attendance System</h1>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="/" class="font-medium hover:text-blue-200 transition-colors">Home</a>
+                    <a href="/register" class="font-medium hover:text-blue-200 transition-colors">Register</a>
+                    <a href="/attendance" class="font-medium hover:text-blue-200 transition-colors">Take Attendance</a>
+                    <a href="/reports" class="font-medium hover:text-blue-200 transition-colors">Reports</a>
+                </nav>
+                <button id="mobile-menu-button" class="md:hidden text-white focus:outline-none">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobile-menu" class="md:hidden hidden bg-blue-500 text-white">
+        <div class="container mx-auto px-4 py-2">
+            <a href="/" class="block py-2 hover:bg-blue-600 transition-colors">Home</a>
+            <a href="/register" class="block py-2 hover:bg-blue-600 transition-colors">Register</a>
+            <a href="/attendance" class="block py-2 hover:bg-blue-600 transition-colors">Take Attendance</a>
+            <a href="/reports" class="block py-2 hover:bg-blue-600 transition-colors">Reports</a>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Attendance Reports</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex items-center">
+                        <div class="bg-blue-100 text-blue-500 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+                            <i class="fas fa-users text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">Total Students</p>
+                            <h3 id="totalStudents" class="text-2xl font-bold">-</h3>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex items-center">
+                        <div class="bg-green-100 text-green-500 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+                            <i class="fas fa-clipboard-check text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">Today's Attendance</p>
+                            <h3 id="todayAttendance" class="text-2xl font-bold">-</h3>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex items-center">
+                        <div class="bg-purple-100 text-purple-500 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+                            <i class="fas fa-calendar-check text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">Total Records</p>
+                            <h3 id="totalRecords" class="text-2xl font-bold">-</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-semibold mb-4">Attendance Trend</h3>
+                    <div class="h-64">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-semibold mb-4">Attendance Rate</h3>
+                    <div class="h-64">
+                        <canvas id="attendanceRateChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Attendance Records</h3>
+                    <div class="flex space-x-2">
+                        <input type="date" id="dateFilter" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button id="filterBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors">
+                            <i class="fas fa-filter mr-1"></i> Filter
+                        </button>
+                        <button id="exportBtn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition-colors">
+                            <i class="fas fa-file-export mr-1"></i> Export
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-4 bg-gray-100 text-left text-gray-600 font-semibold">Roll Number</th>
+                                <th class="py-3 px-4 bg-gray-100 text-left text-gray-600 font-semibold">Name</th>
+                                <th class="py-3 px-4 bg-gray-100 text-left text-gray-600 font-semibold">Date</th>
+                                <th class="py-3 px-4 bg-gray-100 text-left text-gray-600 font-semibold">Time</th>
+                                <th class="py-3 px-4 bg-gray-100 text-left text-gray-600 font-semibold">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceTableBody">
+                            <tr>
+                                <td colspan="5" class="py-4 px-4 text-center text-gray-500">Loading attendance records...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-gray-800 text-white mt-16 py-8">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <p>&copy; 2025 Face Recognition Attendance System</p>
+                <p class="mt-2 text-gray-400">Powered by OpenCV and face_recognition</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Load data and update UI
+        async function loadData() {
+            try {
+                // Fetch students
+                const studentsResponse = await fetch('/api/get_students');
+                const studentsData = await studentsResponse.json();
+                
+                // Fetch attendance records
+                const attendanceResponse = await fetch('/api/get_attendance');
+                const attendanceData = await attendanceResponse.json();
+                
+                // Update stats
+                updateStats(studentsData.students, attendanceData.records);
+                
+                // Update charts
+                updateCharts(attendanceData.records);
+                
+                // Update table
+                updateTable(attendanceData.records);
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        // Update statistics
+        function updateStats(students, records) {
+            // Total students
+            document.getElementById('totalStudents').textContent = students.length;
+            
+            // Total records
+            document.getElementById('totalRecords').textContent = records.length;
+            
+            // Today's attendance
+            const today = new Date().toISOString().split('T')[0];
+            const todayRecords = records.filter(record => record.date === today);
+            document.getElementById('todayAttendance').textContent = todayRecords.length;
+        }
+
+        // Update charts
+        function updateCharts(records) {
+            // Group records by date
+            const recordsByDate = {};
+            records.forEach(record => {
+                if (!recordsByDate[record.date]) {
+                    recordsByDate[record.date] = 0;
+                }
+                recordsByDate[record.date]++;
+            });
+            
+            // Sort dates
+            const sortedDates = Object.keys(recordsByDate).sort();
+            
+            // Get last 7 dates
+            const recentDates = sortedDates.slice(-7);
+            const recentCounts = recentDates.map(date => recordsByDate[date]);
+            
+            // Attendance trend chart
+            const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+            new Chart(attendanceCtx, {
+                type: 'line',
+                data: {
+                    labels: recentDates,
+                    datasets: [{
+                        label: 'Daily Attendance',
+                        data: recentCounts,
+                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                        borderColor: 'rgba(99, 102, 241, 1)',
+                        borderWidth: 2,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Attendance rate chart
+            const totalStudents = document.getElementById('totalStudents').textContent;
+            const attendanceRates = recentDates.map(date => {
+                const count = recordsByDate[date] || 0;
+                return (count / totalStudents) * 100;
+            });
+            
+            const rateCtx = document.getElementById('attendanceRateChart').getContext('2d');
+            new Chart(rateCtx, {
+                type: 'bar',
+                data: {
+                    labels: recentDates,
+                    datasets: [{
+                        label: 'Attendance Rate (%)',
+                        data: attendanceRates,
+                        backgroundColor: 'rgba(139, 92, 246, 0.6)',
+                        borderColor: 'rgba(139, 92, 246, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update table
+        function updateTable(records) {
+            const tableBody = document.getElementById('attendanceTableBody');
+            
+            if (records.length > 0) {
+                // Sort records by date (newest first)
+                records.sort((a, b) => {
+                    if (a.date === b.date) {
+                        return a.time < b.time ? 1 : -1;
+                    }
+                    return a.date < b.date ? 1 : -1;
+                });
+                
+                let tableContent = '';
+                
+                records.forEach(record => {
+                    tableContent += `
+                        <tr>
+                            <td class="py-3 px-4 border-b">${record.roll_no}</td>
+                            <td class="py-3 px-4 border-b">${record.name}</td>
+                            <td class="py-3 px-4 border-b">${record.date}</td>
+                            <td class="py-3 px-4 border-b">${record.time}</td>
+                            <td class="py-3 px-4 border-b">
+                                <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                                    ${record.status}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tableBody.innerHTML = tableContent;
+            } else {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-4 px-4 text-center text-gray-500">No attendance records found.</td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Filter records by date
+        document.getElementById('filterBtn').addEventListener('click', function() {
+            const dateFilter = document.getElementById('dateFilter').value;
+            
+            if (dateFilter) {
+                fetch('/api/get_attendance')
+                    .then(response => response.json())
+                    .then(data => {
+                        const filteredRecords = data.records.filter(record => record.date === dateFilter);
+                        updateTable(filteredRecords);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            } else {
+                // If no date selected, show all records
+                fetch('/api/get_attendance')
+                    .then(response => response.json())
+                    .then(data => {
+                        updateTable(data.records);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }
+        });
+
+        // Export to CSV
+        document.getElementById('exportBtn').addEventListener('click', function() {
+            fetch('/api/get_attendance')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.records.length === 0) {
+                        alert('No records to export');
+                        return;
+                    }
+                    
+                    // Create CSV content
+                    let csvContent = 'Roll Number,Name,Date,Time,Status\n';
+                    
+                    data.records.forEach(record => {
+                        csvContent += `${record.roll_no},${record.name},${record.date},${record.time},${record.status}\n`;
+                    });
+                    
+                    // Create download link
+                    const blob = new Blob([csvContent], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.setAttribute('hidden', '');
+                    a.setAttribute('href', url);
+                    a.setAttribute('download', 'attendance_report.csv');
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error exporting data');
+                });
+        });
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>

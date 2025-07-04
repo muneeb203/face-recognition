@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Students - Face Recognition Attendance System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-user-check text-3xl"></i>
+                    <h1 class="text-2xl font-bold">Face Recognition Attendance System</h1>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="/" class="font-medium hover:text-blue-200 transition-colors">Home</a>
+                    <a href="/register" class="font-medium hover:text-blue-200 transition-colors">Register</a>
+                    <a href="/attendance" class="font-medium hover:text-blue-200 transition-colors">Take Attendance</a>
+                    <a href="/reports" class="font-medium hover:text-blue-200 transition-colors">Reports</a>
+                    <a href="/import" class="font-medium hover:text-blue-200 transition-colors">Import</a>
+                </nav>
+                <button id="mobile-menu-button" class="md:hidden text-white focus:outline-none">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobile-menu" class="md:hidden hidden bg-blue-500 text-white">
+        <div class="container mx-auto px-4 py-2">
+            <a href="/" class="block py-2 hover:bg-blue-600 transition-colors">Home</a>
+            <a href="/register" class="block py-2 hover:bg-blue-600 transition-colors">Register</a>
+            <a href="/attendance" class="block py-2 hover:bg-blue-600 transition-colors">Take Attendance</a>
+            <a href="/reports" class="block py-2 hover:bg-blue-600 transition-colors">Reports</a>
+            <a href="/import" class="block py-2 hover:bg-blue-600 transition-colors">Import</a>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Import Students</h2>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <h3 class="text-xl font-semibold mb-4">Import from Google Sheets</h3>
+                <p class="text-gray-600 mb-4">
+                    Import students from the Google Spreadsheet. The system will download images from the provided URLs and register students automatically.
+                </p>
+                
+                <div class="mb-6">
+                    <div class="flex items-center p-4 bg-blue-50 rounded-lg">
+                        <i class="fas fa-info-circle text-blue-500 mr-3 text-xl"></i>
+                        <div>
+                            <p class="text-blue-800">
+                                The spreadsheet should have columns for <strong>Roll Number</strong>, <strong>Name</strong>, and <strong>Image</strong> (URL).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="importFromGoogleBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                    <i class="fas fa-cloud-download-alt mr-2"></i> Import from Google Sheets
+                </button>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-semibold mb-4">Import Results</h3>
+                
+                <div id="importStatus" class="hidden mb-4">
+                    <div class="flex items-center mb-2">
+                        <div class="w-1/2">
+                            <span class="font-medium">Successfully imported:</span>
+                        </div>
+                        <div class="w-1/2">
+                            <span id="successCount" class="text-green-600 font-medium">0</span> students
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-1/2">
+                            <span class="font-medium">Failed to import:</span>
+                        </div>
+                        <div class="w-1/2">
+                            <span id="failedCount" class="text-red-600 font-medium">0</span> students
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="importMessages" class="border rounded-lg overflow-hidden">
+                    <div class="bg-gray-100 px-4 py-2 border-b">
+                        <h4 class="font-medium">Import Messages</h4>
+                    </div>
+                    <div id="messagesList" class="p-4 max-h-64 overflow-y-auto">
+                        <p class="text-gray-500 text-center">No import has been performed yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-gray-800 text-white mt-16 py-8">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <p>&copy; 2025 Face Recognition Attendance System</p>
+                <p class="mt-2 text-gray-400">Powered by OpenCV and face_recognition</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Import from Google Sheets
+        document.getElementById('importFromGoogleBtn').addEventListener('click', function() {
+            // Show loading state
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Importing...';
+            
+            fetch('/api/import_from_google', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update import status
+                document.getElementById('importStatus').classList.remove('hidden');
+                document.getElementById('successCount').textContent = data.success;
+                document.getElementById('failedCount').textContent = data.failed;
+                
+                // Update messages list
+                const messagesList = document.getElementById('messagesList');
+                
+                if (data.messages && data.messages.length > 0) {
+                    let messagesHTML = '';
+                    
+                    data.messages.forEach((message, index) => {
+                        const isSuccess = message.includes('Successfully');
+                        const messageClass = isSuccess ? 'text-green-600' : 'text-red-600';
+                        
+                        messagesHTML += `
+                            <div class="py-2 ${index > 0 ? 'border-t' : ''}">
+                                <p class="${messageClass}">${message}</p>
+                            </div>
+                        `;
+                    });
+                    
+                    messagesList.innerHTML = messagesHTML;
+                } else {
+                    messagesList.innerHTML = '<p class="text-gray-500 text-center">No messages returned from import.</p>';
+                }
+                
+                // Reset button
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-cloud-download-alt mr-2"></i> Import from Google Sheets';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                
+                // Show error message
+                const messagesList = document.getElementById('messagesList');
+                messagesList.innerHTML = '<p class="text-red-600 text-center">An error occurred during import. Please try again.</p>';
+                
+                // Reset button
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-cloud-download-alt mr-2"></i> Import from Google Sheets';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition Attendance System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-user-check text-3xl"></i>
+                    <h1 class="text-2xl font-bold">Face Recognition Attendance System</h1>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="/" class="font-medium hover:text-blue-200 transition-colors">Home</a>
+                    {% if session.user %}
+                        {% if session.user.role == 'teacher' %}
+                            <a href="/register" class="font-medium hover:text-blue-200 transition-colors">Register</a>
+                            <a href="/attendance" class="font-medium hover:text-blue-200 transition-colors">Take Attendance</a>
+                            <a href="/reports" class="font-medium hover:text-blue-200 transition-colors">Reports</a>
+                            <a href="/import" class="font-medium hover:text-blue-200 transition-colors">Import</a>
+                            <a href="/session" class="font-medium hover:text-blue-200 transition-colors">Session</a>
+                        {% else %}
+                            <a href="/student_register" class="font-medium hover:text-blue-200 transition-colors">Register Face</a>
+                        {% endif %}
+                        <a href="{{ url_for('logout') }}" class="font-medium hover:text-blue-200 transition-colors">Logout</a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="font-medium hover:text-blue-200 transition-colors">Login</a>
+                        <a href="{{ url_for('register_account') }}" class="font-medium hover:text-blue-200 transition-colors">Register</a>
+                    {% endif %}
+                </nav>
+                <button id="mobile-menu-button" class="md:hidden text-white focus:outline-none">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobile-menu" class="md:hidden hidden bg-blue-500 text-white">
+        <div class="container mx-auto px-4 py-2">
+            <a href="/" class="block py-2 hover:bg-blue-600 transition-colors">Home</a>
+            {% if session.user %}
+                {% if session.user.role == 'teacher' %}
+                    <a href="/register" class="block py-2 hover:bg-blue-600 transition-colors">Register</a>
+                    <a href="/attendance" class="block py-2 hover:bg-blue-600 transition-colors">Take Attendance</a>
+                    <a href="/reports" class="block py-2 hover:bg-blue-600 transition-colors">Reports</a>
+                    <a href="/import" class="block py-2 hover:bg-blue-600 transition-colors">Import</a>
+                    <a href="/session" class="block py-2 hover:bg-blue-600 transition-colors">Session</a>
+                {% else %}
+                    <a href="/student_register" class="block py-2 hover:bg-blue-600 transition-colors">Register Face</a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}" class="block py-2 hover:bg-blue-600 transition-colors">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="block py-2 hover:bg-blue-600 transition-colors">Login</a>
+                <a href="{{ url_for('register_account') }}" class="block py-2 hover:bg-blue-600 transition-colors">Register</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mx-auto px-4 py-4">
+                {% for category, message in messages %}
+                    <div class="{% if category == 'error' %}bg-red-100 border-l-4 border-red-500 text-red-700{% else %}bg-green-100 border-l-4 border-green-500 text-green-700{% endif %} p-4 mb-4">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Welcome to Smart Attendance</h2>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                An intelligent face recognition system for automated attendance tracking
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden transform transition-transform hover:scale-105">
+                <div class="bg-blue-500 text-white p-4 text-center">
+                    <i class="fas fa-user-plus text-4xl mb-2"></i>
+                    <h3 class="text-xl font-semibold">Register Students</h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">Add new students to the system with facial recognition.</p>
+                    {% if session.user and session.user.role == 'teacher' %}
+                        <a href="/register" class="block text-center bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors">
+                            Register Now
+                        </a>
+                    {% elif session.user and session.user.role == 'student' %}
+                        <a href="/student_register" class="block text-center bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors">
+                            Register Your Face
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="block text-center bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors">
+                            Login to Register
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden transform transition-transform hover:scale-105">
+                <div class="bg-purple-500 text-white p-4 text-center">
+                    <i class="fas fa-clipboard-check text-4xl mb-2"></i>
+                    <h3 class="text-xl font-semibold">Take Attendance</h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">Mark attendance using facial recognition technology.</p>
+                    {% if session.user and session.user.role == 'teacher' %}
+                        <a href="/attendance" class="block text-center bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded transition-colors">
+                            Start Session
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="block text-center bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded transition-colors">
+                            Login as Teacher
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden transform transition-transform hover:scale-105">
+                <div class="bg-green-500 text-white p-4 text-center">
+                    <i class="fas fa-chart-bar text-4xl mb-2"></i>
+                    <h3 class="text-xl font-semibold">View Reports</h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">Access attendance records and generate reports.</p>
+                    {% if session.user and session.user.role == 'teacher' %}
+                        <a href="/reports" class="block text-center bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded transition-colors">
+                            View Reports
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="block text-center bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded transition-colors">
+                            Login as Teacher
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if session.user and session.user.role == 'teacher' %}
+            <div class="mt-8 text-center">
+                <a href="/import" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                    <i class="fas fa-file-import mr-2"></i> Import Students from Spreadsheet
+                </a>
+            </div>
+        {% endif %}
+
+        <div class="mt-16 bg-white rounded-lg shadow-lg p-8 max-w-4xl mx-auto">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">How It Works</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="bg-blue-100 text-blue-500 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-camera text-2xl"></i>
+                    </div>
+                    <h4 class="font-semibold mb-2">Face Detection</h4>
+                    <p class="text-gray-600">The system detects faces using advanced computer vision.</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-purple-100 text-purple-500 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-fingerprint text-2xl"></i>
+                    </div>
+                    <h4 class="font-semibold mb-2">Face Recognition</h4>
+                    <p class="text-gray-600">Matches detected faces with registered students.</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-green-100 text-green-500 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-check-circle text-2xl"></i>
+                    </div>
+                    <h4 class="font-semibold mb-2">Attendance Marking</h4>
+                    <p class="text-gray-600">Automatically records attendance with timestamp.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-gray-800 text-white mt-16 py-8">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <p>&copy; 2025 Face Recognition Attendance System</p>
+                <p class="mt-2 text-gray-400">Powered by OpenCV and face_recognition</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>

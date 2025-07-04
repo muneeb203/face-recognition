@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Student - Face Recognition Attendance System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-user-check text-3xl"></i>
+                    <h1 class="text-2xl font-bold">Face Recognition Attendance System</h1>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="/" class="font-medium hover:text-blue-200 transition-colors">Home</a>
+                    <a href="/register" class="font-medium hover:text-blue-200 transition-colors">Register</a>
+                    <a href="/attendance" class="font-medium hover:text-blue-200 transition-colors">Take Attendance</a>
+                    <a href="/reports" class="font-medium hover:text-blue-200 transition-colors">Reports</a>
+                </nav>
+                <button id="mobile-menu-button" class="md:hidden text-white focus:outline-none">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobile-menu" class="md:hidden hidden bg-blue-500 text-white">
+        <div class="container mx-auto px-4 py-2">
+            <a href="/" class="block py-2 hover:bg-blue-600 transition-colors">Home</a>
+            <a href="/register" class="block py-2 hover:bg-blue-600 transition-colors">Register</a>
+            <a href="/attendance" class="block py-2 hover:bg-blue-600 transition-colors">Take Attendance</a>
+            <a href="/reports" class="block py-2 hover:bg-blue-600 transition-colors">Reports</a>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-5xl mx-auto">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Register New Student</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-semibold mb-4">Student Information</h3>
+                    <form id="registerForm" class="space-y-4">
+                        <div>
+                            <label for="roll_no" class="block text-gray-700 font-medium mb-2">Roll Number</label>
+                            <input type="text" id="roll_no" name="roll_no" required 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="name" class="block text-gray-700 font-medium mb-2">Full Name</label>
+                            <input type="text" id="name" name="name" required 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="pt-4">
+                            <button type="submit" id="captureBtn" 
+                                class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                                <i class="fas fa-camera mr-2"></i> Capture & Register
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="registrationStatus" class="mt-4 hidden">
+                        <div id="successMessage" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative hidden">
+                            <span id="successText"></span>
+                        </div>
+                        <div id="errorMessage" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative hidden">
+                            <span id="errorText"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-semibold mb-4">Camera Preview</h3>
+                    <div class="relative">
+                        <div class="bg-gray-200 rounded-lg overflow-hidden aspect-video flex items-center justify-center">
+                            <img id="video_feed" src="{{ url_for('video_feed') }}" alt="Camera Feed" class="w-full h-auto">
+                        </div>
+                        <div id="faceDetectionStatus" class="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm">
+                            No Face Detected
+                        </div>
+                    </div>
+                    <div class="mt-4 text-gray-600 text-sm">
+                        <p><i class="fas fa-info-circle mr-1"></i> Position your face clearly in the camera view.</p>
+                        <p class="mt-2"><i class="fas fa-lightbulb mr-1"></i> Ensure good lighting for better recognition.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-semibold mb-4">Registered Students</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-4 bg-gray-100 text-left text-gray-600 font-semibold">Roll Number</th>
+                                <th class="py-3 px-4 bg-gray-100 text-left text-gray-600 font-semibold">Name</th>
+                                <th class="py-3 px-4 bg-gray-100 text-right text-gray-600 font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody">
+                            <tr>
+                                <td colspan="3" class="py-4 px-4 text-center text-gray-500">Loading students...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-gray-800 text-white mt-16 py-8">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <p>&copy; 2025 Face Recognition Attendance System</p>
+                <p class="mt-2 text-gray-400">Powered by OpenCV and face_recognition</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Face detection status check
+        function checkFaceDetection() {
+            const videoFeed = document.getElementById('video_feed');
+            const faceDetectionStatus = document.getElementById('faceDetectionStatus');
+            
+            // This is a simplified check - in a real app, you'd use the API to check
+            // For demo purposes, we'll toggle randomly
+            const isFaceDetected = Math.random() > 0.5;
+            
+            if (isFaceDetected) {
+                faceDetectionStatus.textContent = 'Face Detected';
+                faceDetectionStatus.classList.remove('bg-red-500');
+                faceDetectionStatus.classList.add('bg-green-500');
+            } else {
+                faceDetectionStatus.textContent = 'No Face Detected';
+                faceDetectionStatus.classList.remove('bg-green-500');
+                faceDetectionStatus.classList.add('bg-red-500');
+            }
+        }
+
+        // Check face detection status periodically
+        setInterval(checkFaceDetection, 1000);
+
+        // Registration form submission
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const rollNo = document.getElementById('roll_no').value;
+            const name = document.getElementById('name').value;
+            
+            const formData = new FormData();
+            formData.append('roll_no', rollNo);
+            formData.append('name', name);
+            
+            // Show loading state
+            const captureBtn = document.getElementById('captureBtn');
+            captureBtn.disabled = true;
+            captureBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+            
+            fetch('/api/register_student', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const registrationStatus = document.getElementById('registrationStatus');
+                const successMessage = document.getElementById('successMessage');
+                const errorMessage = document.getElementById('errorMessage');
+                const successText = document.getElementById('successText');
+                const errorText = document.getElementById('errorText');
+                
+                registrationStatus.classList.remove('hidden');
+                
+                if (data.success) {
+                    successMessage.classList.remove('hidden');
+                    errorMessage.classList.add('hidden');
+                    successText.textContent = data.message;
+                    
+                    // Reset form
+                    document.getElementById('registerForm').reset();
+                    
+                    // Refresh student list
+                    loadStudents();
+                } else {
+                    successMessage.classList.add('hidden');
+                    errorMessage.classList.remove('hidden');
+                    errorText.textContent = data.message;
+                }
+                
+                // Reset button
+                captureBtn.disabled = false;
+                captureBtn.innerHTML = '<i class="fas fa-camera mr-2"></i> Capture & Register';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const registrationStatus = document.getElementById('registrationStatus');
+                const successMessage = document.getElementById('successMessage');
+                const errorMessage = document.getElementById('errorMessage');
+                const errorText = document.getElementById('errorText');
+                
+                registrationStatus.classList.remove('hidden');
+                successMessage.classList.add('hidden');
+                errorMessage.classList.remove('hidden');
+                errorText.textContent = 'An error occurred. Please try again.';
+                
+                // Reset button
+                captureBtn.disabled = false;
+                captureBtn.innerHTML = '<i class="fas fa-camera mr-2"></i> Capture & Register';
+            });
+        });
+
+        // Load registered students
+        function loadStudents() {
+            fetch('/api/get_students')
+                .then(response => response.json())
+                .then(data => {
+                    const studentsTableBody = document.getElementById('studentsTableBody');
+                    
+                    if (data.students && data.students.length > 0) {
+                        let tableContent = '';
+                        
+                        data.students.forEach(student => {
+                            tableContent += `
+                                <tr>
+                                    <td class="py-3 px-4 border-b">${student.roll_no}</td>
+                                    <td class="py-3 px-4 border-b">${student.name}</td>
+                                    <td class="py-3 px-4 border-b text-right">
+                                        <button class="delete-student text-red-500 hover:text-red-700" data-roll="${student.roll_no}">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        
+                        studentsTableBody.innerHTML = tableContent;
+                        
+                        // Add event listeners to delete buttons
+                        document.querySelectorAll('.delete-student').forEach(button => {
+                            button.addEventListener('click', function() {
+                                const rollNo = this.getAttribute('data-roll');
+                                deleteStudent(rollNo);
+                            });
+                        });
+                    } else {
+                        studentsTableBody.innerHTML = `
+                            <tr>
+                                <td colspan="3" class="py-4 px-4 text-center text-gray-500">No students registered yet.</td>
+                            </tr>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    const studentsTableBody = document.getElementById('studentsTableBody');
+                    studentsTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="3" class="py-4 px-4 text-center text-red-500">Error loading students.</td>
+                        </tr>
+                    `;
+                });
+        }
+
+        // Delete student
+        function deleteStudent(rollNo) {
+            if (confirm(`Are you sure you want to delete student with Roll No: ${rollNo}?`)) {
+                const formData = new FormData();
+                formData.append('roll_no', rollNo);
+                
+                fetch('/api/delete_student', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        loadStudents();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting the student.');
+                });
+            }
+        }
+
+        // Load students when page loads
+        document.addEventListener('DOMContentLoaded', loadStudents);
+    </script>
+</body>
+</html>
